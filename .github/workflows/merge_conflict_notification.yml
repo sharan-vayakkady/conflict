@@ -1,39 +1,39 @@
-name: Slack Merge Conflict Notification
+name: Merge Conflict Notification
 
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
-  slack_notification:
+  send_notification:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Install Git
-        run: sudo apt-get -y install git
+    - name: Install jq
+      run: sudo apt-get install jq -y
 
-      - name: Check for merge conflicts
-        id: merge_conflicts
-        run: |
-          git fetch origin
-          git diff --name-only origin/main -- '*.conflict'
+    - name: Check for merge conflict
+      run: |
+        conflict_files=$(git diff --name-only --diff-filter=U)
+        if [ -n "$conflict_files" ]; then
+          echo "Merge conflict detected!"
+          echo "The following files have conflicts:"
+          echo "$conflict_files"
+          echo "::set-output name=conflict_files::$conflict_files"
+        else
+          echo "No merge conflict detected."
+        fi
 
-      - name: Send Slack notification
-        if: steps.merge_conflicts.outputs.merge_conflicts != ''
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          MESSAGE: 'Merge conflicts detected in the following files:'
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{
-            "text": "'"${MESSAGE}"'",
-            "attachments": [
-              {
-                "color": "#FF0000",
-                "text": "'"${{ steps.merge_conflicts.outputs.merge_conflicts }}"'"
-              }
-            ]
-          }' $SLACK_WEBHOOK_URL
+    - name: Send notification to Slack
+      if: ${{ steps.check_conflict.outputs.conflict_files }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        conflict_files=${{ steps.check_conflict.outputs.conflict_files }}
+        message="Merge conflict detected in the following files:${conflict_files}"
+        payload="{\"text\": \"${message}\"}"
+        curl -X POST -H 'Content-type: application/json' --data "${payload}" "${SLACK_WEBHOOK_URL}"
