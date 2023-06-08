@@ -18,13 +18,16 @@ jobs:
 
       - name: Check for merge conflicts
         run: |
-          git fetch origin pull/${{ github.event.pull_request.number }}/merge
-          git diff --name-only origin/main...FETCH_HEAD
+          BASE=$(git merge-base origin/main "${{ github.sha }}")
+          CONFLICTS=$(git diff --name-only "$BASE" "${{ github.sha }}")
+          if [[ -n "$CONFLICTS" ]]; then
+            echo "Merge conflict detected in PR ${{ github.event.pull_request.number }}"
+          fi
 
       - name: Send notification
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
-          if [[ -n $(git diff --name-only origin/main...FETCH_HEAD) ]]; then
+          if [[ -n "$CONFLICTS" ]]; then
             curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"Merge conflict detected in PR ${{ github.event.pull_request.number }}\"}" $SLACK_WEBHOOK_URL
           fi
