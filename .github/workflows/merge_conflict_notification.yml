@@ -29,9 +29,7 @@ jobs:
           fi
 
       - name: Send notification
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           if [[ -n "$CONFLICTS" ]]; then
-            curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"Merge conflict detected in PR ${{ github.event.pull_request.number }}\"}" $SLACK_WEBHOOK_URL
+            curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"Merge conflict detected in PR ${{ github.event.pull_request.number }}\"}" https://hooks.slack.com/services/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
           fi
