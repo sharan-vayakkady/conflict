@@ -2,9 +2,7 @@ name: Merge Conflict Notification
 
 on:
   pull_request:
-    types:
-      - synchronize
-
+  
 jobs:
   send_notification:
     runs-on: ubuntu-latest
