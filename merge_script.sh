@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Clone the repository
-git clone git@github.com:sharan-vayakkady/conflict.git
+git clone https://github.com/sharan-vayakkady/conflict.git
 cd conflict
 
 # Checkout the target branch
