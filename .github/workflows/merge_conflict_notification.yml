@@ -2,36 +2,30 @@ name: Merge Conflict Notification
 
 on:
   pull_request:
-  
+    types:
+      - synchronize
+
 jobs:
-  send_notification:
+  notify:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Configure Git
-        run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+    - name: Install Git
+      run: sudo apt-get -y install git
 
-      - name: Fetch branches
-        run: |
-          git fetch origin
+    - name: Check for merge conflicts
+      id: merge-check
+      run: |
+        git fetch origin +refs/pull/${{ github.event.pull_request.number }}/merge:
+        git diff --name-only FETCH_HEAD...HEAD | xargs test -e
 
-      - name: Check for merge conflicts
-        run: |
-          BASE=$(git merge-base origin/main "${{ github.event.pull_request.head.sha }}")
-          CONFLICTS=$(git diff --name-only "$BASE" "${{ github.event.pull_request.head.sha }}")
-          if [[ -n "$CONFLICTS" ]]; then
-            echo "Merge conflict detected in PR ${{ github.event.pull_request.number }}"
-          fi
-
-      - name: Send notification
-        run: |
-          if [[ -n "$CONFLICTS" ]]; then
-            curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"Merge conflict detected in PR ${{ github.event.pull_request.number }}\"}" https://hooks.slack.com/services/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
-          else
-            curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"No Merge conflict detected in PR ${{ github.event.pull_request.number }}\"}" https://hooks.slack.com/services/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
-          fi
+    - name: Send notification to Slack
+      if: steps.merge-check.outputs.stdout
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      with:
+        args: '{"text": "A merge conflict occurred in PR ${{ github.event.pull_request.number }}."}'
