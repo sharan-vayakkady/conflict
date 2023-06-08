@@ -18,8 +18,8 @@ jobs:
 
       - name: Check for merge conflicts
         run: |
-          BASE=$(git merge-base origin/main "${{ github.sha }}")
-          CONFLICTS=$(git diff --name-only "$BASE" "${{ github.sha }}")
+          BASE=$(git merge-base origin/main "${{ github.event.pull_request.head.sha }}")
+          CONFLICTS=$(git diff --name-only "$BASE" "${{ github.event.pull_request.head.sha }}")
           if [[ -n "$CONFLICTS" ]]; then
             echo "Merge conflict detected in PR ${{ github.event.pull_request.number }}"
           fi
