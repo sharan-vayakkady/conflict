@@ -1,30 +1,31 @@
 name: Merge Conflict Notification
 
 on:
-  pull_request:
-    types:
-      - synchronize
+  push:
+    branches:
+      - main
+
 jobs:
-  notify:
+  merge_conflict_notification:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install Git
-      run: sudo apt-get -y install git
+      - name: Install Git
+        run: |
+          sudo apt-get update && sudo apt-get install git -y
 
-    - name: Check for merge conflicts
-      id: merge-check
-      run: |
-        git fetch origin +refs/pull/${{ github.event.pull_request.number }}/merge:
-        git diff --name-only FETCH_HEAD...HEAD | xargs test -e
-
-    - name: Send notification to Slack
-      if: steps.merge-check.outputs.stdout
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-      with:
-        args: '{"text": "A merge conflict occurred in PR ${{ github.event.pull_request.number }}."}'
+      - name: Check for merge conflict
+        run: |
+          git checkout main
+          git pull origin main
+          git checkout ${{ github.sha }}
+          git merge main
+          if [[ $? -ne 0 ]]; then
+            echo "Merge conflict detected."
+            echo "Sending notification to Slack..."
+            curl -X POST -H 'Content-type: application/json' --data '{"text":"Merge conflict detected in branch '${{ github.ref }}'."}' ${{ secrets.SLACK_WEBHOOK_URL }}
+            exit 1
+          fi
