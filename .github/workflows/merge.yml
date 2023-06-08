@@ -1,0 +1,25 @@
+name: Merge Conflict Check
+
+on:
+  push:
+    branches:
+      - <source-branch>
+
+jobs:
+  merge_conflict_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run merge script
+        run: bash merge_script.sh
+
+      - name: Send Slack notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          status: ${{ job.status }}
+          text: 'Merge conflict occurred in the repository: conflict'
