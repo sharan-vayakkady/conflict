@@ -16,6 +16,10 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
 
+      - name: Fetch branches
+        run: |
+          git fetch origin
+
       - name: Check for merge conflicts
         run: |
           BASE=$(git merge-base origin/main "${{ github.event.pull_request.head.sha }}")
