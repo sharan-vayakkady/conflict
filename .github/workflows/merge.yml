@@ -3,7 +3,7 @@ name: Merge Conflict Check
 on:
   push:
     branches:
-      - <source-branch>
+      - main
 
 jobs:
   merge_conflict_check:
