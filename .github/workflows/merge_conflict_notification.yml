@@ -32,4 +32,6 @@ jobs:
         run: |
           if [[ -n "$CONFLICTS" ]]; then
             curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"Merge conflict detected in PR ${{ github.event.pull_request.number }}\"}" https://hooks.slack.com/services/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
+          else
+            curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"No Merge conflict detected in PR ${{ github.event.pull_request.number }}\"}" https://hooks.slack.com/services/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
           fi
